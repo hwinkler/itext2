@@ -1,0 +1,12 @@
+<ivysettings>  
+    <settings defaultResolver="chained"/>  
+    <resolvers>  
+        <chain name="chained" returnFirst="true">
+            <ibiblio name="ibiblio" m2compatible="true"/>
+            <filesystem name="local">
+                <artifact pattern="/local/file/system/[organization]-[revision]/lib/[module].jar" />
+                <artifact pattern="/local/file/system/[organization]-[revision]/[module].jar" />
+            </filesystem>
+        </chain>  
+    </resolvers>  
+</ivysettings>
