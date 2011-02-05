@@ -1,0 +1,19 @@
+--- 
+name: iText 2.1.7 Source
+platform_id: all
+platform_version: all
+distribution_file_uuid_string: openlogic-itext-2.1.7-all-src-1
+platform_vendor: all
+version_visibility: public
+description: iText 2.1.7 Source
+platform_arch: all
+distribution_file_uuid: 93f85f0983f7c4dc8975fead316a58f831bc142f486ec789783d003b73b2276a
+distribution_version: 1
+distribution_flavor: ""
+distribution_raw_file: 2.1.7/iText-src-2.1.7.tar.gz
+notify: "yes"
+package_version: 2.1.7
+package_id: itext
+release_date: "2010-04-15"
+distribution_notes: ""
+distribution_type: src
