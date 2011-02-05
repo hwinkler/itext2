@@ -5,27 +5,71 @@
 <!-- $Id: compile.xml 3954 2009-06-08 00:50:15Z xlv $         -->
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<project name="iText.compile" default="help">
-	<property file="local.properties" />
-	<property file="${user.home}/.ant.properties" />
-	<property file=".ant.properties" />
-	
-	<path id="itext.classpath">
-	    <pathelement location="${itext.bin}"/>
-		<!-- jars needed for iText (core) -->
-		    <pathelement path="${itext.lib}/${lib.bcmail}"/>
-	    <pathelement path="${itext.lib}/${lib.bcprov}"/>
-	    <pathelement path="${itext.lib}/${lib.bctsp}"/>
-		<!-- jars needed for RUPS -->
-	    <pathelement path="${itext.lib}/${lib.pdf-renderer}"/>
-	    <pathelement path="${itext.lib}/${lib.dom4j}"/>
-	</path>
+<project name="iText.compile" default="help" xmlns:ivy="antlib:org.apache.ivy.ant">
+    <property file="local.properties" />
+    <property file="${user.home}/.ant.properties" />
+    <property file=".ant.properties" />
+    
+
+    <!-- ivy targets-->
+    <!-- 
+    This build uses Apache ivy to manage dependencies. If you don't have
+    ivy.jar, get it from http://ant.apache.org/ivy/.
+    
+    If you haven't done this, you may see this warning when you run ant:
+    
+    This appears to be an antlib declaration. 
+    Action: Check that the implementing library exists in one of:
+            -/usr/lib/ant/lib
+            -/home/me/.ant/lib
+            -a directory added on the command line with the -lib argument
+    
+    Put your copy of ivy.jar in one of the directories or as a command
+    line parameter to ant, e.g.
+    ant -lib /home/me/mylibs/ivy-2.1.0.jar  -f ant/compile.xml jar
+    -->
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" />
+
+    <target name="resolve">
+        <mkdir dir="${itext.lib}"/>
+        <ivy:configure file="${itext.src}/ivysettings.xml"/>
+        <ivy:resolve file="${itext.src}/ivy.xml" conf="default"/>
+        <ivy:retrieve pattern="${itext.lib}/default/[artifact]-[revision].[ext]" conf="default"/> 
+    </target>
+
+    <target name="ivy-report" depends="resolve" description="generates a report of dependencies">    
+        <ivy:report todir="${dir.target}" conf="default"/>
+    </target>
+
+    <target name="clean-lib" description="clean the project libraries directory (dependencies)">
+        <delete includeemptydirs="true" dir="${itext.lib}"/>
+    </target>
+
+    <target name="clean-ivy" depends="clean-lib" description="delete ivy cache">
+        <delete dir="${ivy.cache.dir}"/>
+        <ivy:cleancache />
+    </target>   
+
+
+    <!-- end of ivy targets -->
+        
+       
+    
+    <path id="itext.classpath">
+        <pathelement location="${itext.bin}"/>
+        <fileset dir="${itext.lib}" />
+    </path>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Help                                                             -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <target name="help" description="--> shows the help screen">
+        <echo>YOU NEED IVY </echo>
+        <echo>This build file uses the Ivy dependency manager. Download ivy.jar
+from http://ant.apache.org/ivy/ and place it in ${ant.home}/lib, 
+or in ${user.home}/.ant/lib. </echo>
+        <echo/>
         <echo>COMPILING AND JARRING THE CODE (compile.xml)</echo>
         <echo>ant compile: compiles iText (core)</echo>
         <echo>ant compile.rtf: compiles iText RTF</echo>
@@ -34,17 +78,17 @@
         <echo>ant jar.rtf: compiles and jars iText RTF</echo>
         <echo>ant jar.rups: compiles and jars iText RUPS</echo>
         <echo />
-	</target>
+    </target>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Compiling the code                                               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-    <target name="compile" description="--> compiles the iText code">
+    <target name="compile" description="--> compiles the iText code" depends="resolve">
         <mkdir dir="${itext.bin}" />
         <javac source="${itext.jdk.core}" target="${itext.jdk.core}" srcdir="${itext.src}/core" destdir="${itext.bin}">
-    	<classpath refid="itext.classpath"/>
-    	</javac>
+        <classpath refid="itext.classpath"/>
+        </javac>
     </target>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -57,7 +101,7 @@
             <classpath refid="itext.classpath"/>
         </javac>
     </target>
-	
+    
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Compiling the RUPS code                                          -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -65,10 +109,10 @@
     <target name="compile.rups" depends="compile" description="--> compiles the RUPS code">
         <mkdir dir="${itext.rups.bin}" />
         <javac source="${itext.jdk.rups}" target="${itext.jdk.rups}" srcdir="${itext.rups.src}" destdir="${itext.rups.bin}">
-    		<classpath refid="itext.classpath"/>
-    	</javac>
+            <classpath refid="itext.classpath"/>
+        </javac>
     </target>
-	
+    
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Compiling the Toolbox code                                          -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -76,8 +120,8 @@
     <target name="compile.toolbox" depends="compile" description="--> compiles the Toolbox code">
         <mkdir dir="${itext.toolbox.bin}" />
         <javac source="${itext.jdk.toolbox}" target="${itext.jdk.toolbox}" srcdir="${itext.toolbox.src}" destdir="${itext.toolbox.bin}">
-    		<classpath refid="itext.classpath"/>
-    	</javac>
+            <classpath refid="itext.classpath"/>
+        </javac>
     </target>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -97,18 +141,25 @@
                 <include name="**/*.txt"/>
             </fileset>
         </copy>
+        
+        <path id="lib.runtime.path">
+            <fileset dir="${itext.lib}/default" includes="*.jar"/>
+        </path> 
+        <pathconvert property="manifest.classpath" refid="lib.runtime.path">    
+            <flattenmapper/>
+        </pathconvert>    
         <jar jarfile="${itext.jar}" basedir="${itext.bin}">
             <manifest>
                 <attribute name="Main-Class" value="com.lowagie.tools.ToolboxAvailable"/>
-                <!-- <attribute name="Class-Path" value="iText-toolbox.jar iText-toolbox-${releasenumber}.jar ${lib.bcmail} ${lib.bcprov} ${lib.bctsp}"/> -->
+                <attribute name="Class-Path" value="${manifest.classpath}" />
             </manifest>
         </jar>
     </target>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Compiling and Jarring the code                                   -->
-	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    
     <target name="jar"  depends="compile, make.jar" description="--> makes a jarfile from the iText code" />
     
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -123,25 +174,25 @@
     <!-- Making the jars for RUPS                                         -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-	<target name="jar.rups" depends="compile.rups">
+    <target name="jar.rups" depends="compile.rups">
         <copy todir="${itext.rups.bin}" overwrite="yes">
             <fileset dir="${itext.rups.src}">
                 <include name="**/*.png"/>
             </fileset>
         </copy>
-		<jar destfile="${itext.rups.jar}" basedir="${itext.rups.bin}" includes="**/*.class, **/*.png">
-		    <manifest>
+        <jar destfile="${itext.rups.jar}" basedir="${itext.rups.bin}" includes="**/*.class, **/*.png">
+            <manifest>
                 <attribute name="Main-Class" value="com.lowagie.rups.Rups"/>
                 <attribute name="Class-Path" value="iText-${releasenumber}.jar ${lib.pdf-renderer} ${lib.bcmail} ${lib.bcprov} ${lib.bctsp} ${lib.dom4j}"/>
             </manifest>
-		</jar>
-	</target>
+        </jar>
+    </target>
     
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Making the jars for the Toolbox                                  -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-	<target name="jar.toolbox" depends="compile.toolbox">
+    <target name="jar.toolbox" depends="compile.toolbox">
         <copy todir="${itext.toolbox.bin}" overwrite="yes">
             <fileset dir="${itext.toolbox.src}">
                 <include name="**/*.gif"/>
@@ -149,16 +200,16 @@
                 <include name="**/*.txt"/>
             </fileset>
         </copy>
-		<jar destfile="${itext.toolbox.jar}" basedir="${itext.toolbox.bin}" includes="**/*.class, **/*.png, **/*.txt, **/*.gif">
-		    <manifest>
+        <jar destfile="${itext.toolbox.jar}" basedir="${itext.toolbox.bin}" includes="**/*.class, **/*.png, **/*.txt, **/*.gif">
+            <manifest>
                 <attribute name="Main-Class" value="com.lowagie.toolbox.Toolbox"/>
                 <attribute name="Class-Path" value="iText-${releasenumber}.jar ${lib.bcmail} ${lib.bctsp} ${lib.bcprov}"/>
             </manifest>
-		</jar>
-	</target>
+        </jar>
+    </target>
 
-	<!-- This is probably no longer used by anyone: -->
-	
+    <!-- This is probably no longer used by anyone: -->
+    
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Compiling the code for debugging                                 -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -166,14 +217,14 @@
     <target name="compile.debug" description="--> compiles the iText code for debugging">
         <mkdir dir="${itext.bin}" />
         <javac source="${itext.jdk.core}" target="${itext.jdk.core}" srcdir="${itext.src}/core" destdir="${itext.bin}" listfiles="yes" debug="true" debuglevel="lines,vars,source">
-        	<classpath refid="itext.classpath"/>
-       	</javac>
+            <classpath refid="itext.classpath"/>
+        </javac>
     </target>
-	
+    
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Jarring the code (debug)                                         -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	
+    
     <target name="jar.debug"  depends="compile.debug, make.jar" description="--> makes a jarfile from the iText code" />
 
 </project>

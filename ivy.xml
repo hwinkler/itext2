@@ -1,0 +1,20 @@
+<ivy-module version="2.0">
+    <info organisation="com.wellstorm" module="itext2" status="integration"/>
+    <configurations>
+        <conf name="default"/>  
+    </configurations>
+
+    <publications>
+        <artifact name="itext2" type="jar"  conf="default"/>   
+    </publications> 
+
+    <dependencies defaultconfmapping="*->*,!javadoc,!sources">
+        <!-- jars needed for iText (core) -->
+        <dependency org="org.bouncycastle" name="bcmail-jdk16" rev="1.45"/>
+        <dependency org="org.bouncycastle" name="bcprov-jdk16" rev="1.45"/>
+        <dependency org="org.bouncycastle" name="bctsp-jdk16" rev="1.45"/>
+        <!-- jars needed for RUPS -->
+        <dependency org="org.swinglabs" name="pdf-renderer" rev="1.0.5"/>
+        <dependency org="dom4j" name="dom4j" rev="1.6.1"/>
+    </dependencies>
+</ivy-module>
