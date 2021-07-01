@@ -3,6 +3,7 @@
 .vs
 build/
 .gradle/
+.idea/
 
 # Binary files
 *.jar

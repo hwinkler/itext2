@@ -55,6 +55,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,7 +80,9 @@ import com.lowagie.text.pdf.interfaces.PdfViewerPreferences;
 import com.lowagie.text.pdf.internal.PdfViewerPreferencesImp;
 
 import org.bouncycastle.cms.CMSEnvelopedData;
-import org.bouncycastle.cms.RecipientInformation;
+import org.bouncycastle.cms.KeyTransRecipientInformation;
+import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
+import org.bouncycastle.cms.jcajce.JceKeyTransRecipient;
 
 /** Reads a PDF document.
  * @author Paulo Soares (psoares@consiste.pt)
@@ -714,13 +717,12 @@ public class PdfReader implements PdfViewerPreferences {
                     data = new CMSEnvelopedData(recipient.getBytes());
 
                     Iterator recipientCertificatesIt = data.getRecipientInfos().getRecipients().iterator();
-
                     while (recipientCertificatesIt.hasNext()) {
-                        RecipientInformation recipientInfo = (RecipientInformation)recipientCertificatesIt.next();
-
+                        KeyTransRecipientInformation recipientInfo = (KeyTransRecipientInformation)recipientCertificatesIt.next();
                         if (recipientInfo.getRID().match(certificate) && !foundRecipient) {
-                         envelopedData = recipientInfo.getContent(certificateKey, certificateKeyProvider);
-                         foundRecipient = true;
+                            JceKeyTransRecipient recipient1 = new JceKeyTransEnvelopedRecipient((PrivateKey) certificateKey);
+                            envelopedData = recipientInfo.getContent(recipient1);
+                            foundRecipient = true;
                         }
                     }
                 }

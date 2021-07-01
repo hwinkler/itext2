@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+repositories { 
+    mavenCentral() 
+}
+
+jar {
+    archiveBaseName = 'itext'
+    archiveVersion =  '2.1.7.1-pf'
+}
+
+// tag::dependencies[]
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.69'
+    implementation group: 'org.bouncycastle', name: 'bcmail-jdk15on', version: '1.69'
+    
+    testImplementation "org.codehaus.groovy:groovy:3.0.8"
+    testImplementation platform(group: 'org.spockframework', name: 'spock-bom', version: '2.0-groovy-3.0')
+    testImplementation group: 'org.spockframework', name: 'spock-core'
+    testImplementation group: 'org.spockframework', name: 'spock-junit4'
+    
+    // optional dependencies for using Spock
+    testImplementation "org.hamcrest:hamcrest-core:2.2"   // only necessary if Hamcrest matchers are used
+    testRuntimeOnly "net.bytebuddy:byte-buddy:1.11.0" // allows mocking of classes (in addition to interfaces)
+    testRuntimeOnly "org.objenesis:objenesis:3.2"      // allows mocking of classes without default constructor (together with ByteBuddy or CGLIB)
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
