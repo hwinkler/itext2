@@ -1,0 +1,10 @@
+# IDE and build output
+.project
+.vs
+build/
+.gradle/
+
+# Binary files
+*.jar
+*.class
+!gradle-wrapper.jar
